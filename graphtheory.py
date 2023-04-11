@@ -15,7 +15,9 @@ COLOUR_DELETE = (255, 0, 0)
 def now():
     return(datetime.datetime.now().isoformat().split(".")[0])
 
-def export_json(filename = "graph_"+now()+".json"):
+def export_json(filename = ""):
+    if(filename == ""):
+        filename = "graph_" + now() + ".json"
     nodes_json = [{"name": node[2], "position": node[1].center} for node in nodes]
     full_json = {"nodes": nodes_json, "edges": edges}
     #print(full_json)
@@ -89,6 +91,68 @@ def focusNode(node, radius, offset):
 def isConnected(node1, node2):
     return(bool(edges[node1, node2]))
 
+def quitProgram():
+    global run
+    run = False
+
+def focus():
+    global selected
+    focusNode(selected, 200, screenCentre)
+    selected[0] = font.render(selected[2], True, COLOUR_FG, COLOUR_BG)
+    selected = None
+
+def clear():
+    global edges
+    edges = [[int(node_a==node_b) for node_a in nodes] for node_b in nodes]
+
+def complete():
+    global edges
+    edges = [[1 for node_a in nodes] for node_b in nodes]
+
+def changeFontSize(changeInFontSize):
+    global font_size
+    global font
+    font_size = font_size + changeInFontSize
+    font = pygame.font.SysFont("monospace", font_size)
+    for node in nodes:
+        node[0] = font.render(node[2], True, COLOUR_FG, COLOUR_BG)
+        centre = node[1].center
+        node[1] = node[0].get_rect()
+        node[1].center = centre
+
+def changeLineWidth(changeInLineWidth):
+    global line_width
+    line_width = line_width + changeInLineWidth
+
+def printStatus():
+    print(edges)
+    print([node[2] for node in nodes])
+
+def rename():
+    global renaming
+    renaming = True if selected is not None else False
+
+def debug():
+    print("selected: ", selected)
+    print("renaming: ", renaming)
+    print("drag: ", drag)
+    print("scroll", scroll)
+
+keys = {"q": [quitProgram, "quit"],
+        "a": [lambda: arrangeNodes(200, screenCentre), "arrange nodes"],
+        "f": [focus, "focus node"],
+        "n": [lambda: createNode(screenCentre, label = str(len(nodes))), "new node"],
+        "c": [clear, "clear all edges"],
+        "k": [complete, "connect all nodes"],
+        "=": [lambda: changeFontSize(5), "increase font size"],
+        "-": [lambda: changeFontSize(-5), "decrease font size"],
+        "+": [lambda: changeLineWidth(1), "increase line width"],
+        "_": [lambda: changeLineWidth(-1), "decrease line width"],
+        "p": [printStatus, "print status"],
+        "e": [export_json, "export json"],
+        "r": [rename, "rename node"],
+        "d": [debug, "debug"]}
+
 if(__name__ == "__main__"):
     pygame.init()
     size = (1600, 900)
@@ -123,54 +187,8 @@ if(__name__ == "__main__"):
                     node[1].x = int(node[1].x * factor[0])
                     node[1].y = int(node[1].y * factor[1])
             elif((event.type == pygame.KEYDOWN) and not(renaming)):
-                if(str(event.unicode) == "q"): #quit
-                    run = False
-                elif(str(event.unicode) == "a"): #arrange
-                    arrangeNodes(100, screenCentre)
-                elif(str(event.unicode) == "f"): #focus
-                    if(selected is not None):
-                        focusNode(selected, 100, screenCentre)
-                        selected[0] = font.render(selected[2], True, COLOUR_FG, COLOUR_BG)
-                        selected = None
-                elif(str(event.unicode) == "n"): #new
-                    createNode(screenCentre, label = str(len(nodes)))
-                elif(str(event.unicode) == "c"): #clear
-                    edges = [[int(node_a == node_b) for node_a in nodes] for node_b in nodes]
-                elif(str(event.unicode) == "k"): #complete graph k
-                    edges = [[1 for node_a in nodes] for node_b in nodes]
-                elif(str(event.unicode) == "-"): #decrease font size
-                    font_size -= 5
-                    font = pygame.font.SysFont("monospace", font_size)
-                    for node in nodes:
-                        node[0] = font.render(node[2], True, COLOUR_FG, COLOUR_BG)
-                        centre = node[1].center
-                        node[1] = node[0].get_rect()
-                        node[1].center = centre
-                elif(str(event.unicode) == "="): #increase font size
-                    font_size += 5
-                    font = pygame.font.SysFont("monospace", font_size)
-                    for node in nodes:
-                        node[0] = font.render(node[2], True, COLOUR_FG, COLOUR_BG)
-                        centre = node[1].center
-                        node[1] = node[0].get_rect()
-                        node[1].center = centre
-                elif(str(event.unicode) == "_"): #decrease line width
-                    line_width -= 1
-                elif(str(event.unicode) == "+"): #increase line width
-                    line_width += 1
-                elif(str(event.unicode) == "p"): #print
-                    print(edges)
-                    print([node[2] for node in nodes])
-                elif(str(event.unicode) == "e"): #export
-                    export_json()
-                elif(str(event.unicode) == "r"): #rename
-                    if(selected is not None):
-                        renaming = True
-                elif(str(event.unicode) == "d"):
-                    print("selected: ", selected)
-                    print("renaming: ", renaming)
-                    print("drag: ", drag)
-                    print("scroll", scroll)
+                if(str(event.unicode) in keys):
+                    keys[str(event.unicode)][0]()
             elif((event.type == pygame.KEYDOWN) and (renaming)):
                 if(event.key == pygame.K_BACKSPACE):
                     selected[2] = selected[2][:-1]
