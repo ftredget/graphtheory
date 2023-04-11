@@ -7,10 +7,10 @@ import os
 import json
 import datetime
 
-COLOUR_BG = (0, 0, 0)
-COLOUR_FG = (255, 255, 255)
-COLOUR_SELECTED = (0, 255, 0)
-COLOUR_DELETE = (255, 0, 0)
+COLOUR_BG       = (  0,   0,   0)
+COLOUR_FG       = (255, 255, 255)
+COLOUR_SELECTED = (  0, 255,   0)
+COLOUR_DELETE   = (255,   0,   0)
 
 def now():
     return(datetime.datetime.now().isoformat().split(".")[0])
@@ -41,6 +41,20 @@ def import_json(filename):
     edges0 = file_contents["edges"]
     return([nodes0, edges0])
 
+def toggle_import():
+    global file_menu
+    global menu
+    file_menu = not(file_menu)
+    if(file_menu):
+        path  = os.path.dirname(os.path.realpath(__file__))
+        jsons = [file for file in os.listdir(path) if file[-5:] == ".json"]
+        menu = []
+        for (i, json) in enumerate(jsons):
+            text = font.render(json, True, COLOUR_FG, COLOUR_BG)
+            box = text.get_rect()
+            box.center = [size[0] / 2, size[1] / 2 - (len(jsons)/2-i) * font_size]
+            menu.append([text, box, json])
+
 def createNode(position = (0,0), label = ""):
     text = font.render(label, True, COLOUR_FG, COLOUR_BG)
     textbox = text.get_rect()
@@ -54,8 +68,8 @@ def createNode(position = (0,0), label = ""):
 def deleteNode(node):
     nodes.remove(nodes[node])
     for row in edges:
-        row[node] = None #Setting the value to None means it will delete the correct datum
-        row.remove(None) #instead of the first datum with the same value
+        row[node] = None #Setting the value to None means it will delete the correct item
+        row.remove(None) #instead of the first item with the same value
     edges[node] = None
     edges.remove(None)
 
@@ -136,7 +150,8 @@ def debug():
     print("selected: ", selected)
     print("renaming: ", renaming)
     print("drag: ", drag)
-    print("scroll", scroll)
+    print("scroll: ", scroll)
+    print("file_menu: ", file_menu)
 
 keys = {"q": [quitProgram, "quit"],
         "a": [lambda: arrangeNodes(200, screenCentre), "arrange nodes"],
@@ -150,8 +165,10 @@ keys = {"q": [quitProgram, "quit"],
         "_": [lambda: changeLineWidth(-1), "decrease line width"],
         "p": [printStatus, "print status"],
         "e": [export_json, "export json"],
+        "i": [toggle_import, "import json"],
         "r": [rename, "rename node"],
-        "d": [debug, "debug"]}
+        "d": [debug, "debug"]
+}
 
 if(__name__ == "__main__"):
     pygame.init()
@@ -167,6 +184,7 @@ if(__name__ == "__main__"):
     scroll = False #drag screen (i.e. scrolling)
     renaming = False
     selected = None
+    file_menu = False
     line_width = 2
     font_size = 40
 
@@ -189,7 +207,10 @@ if(__name__ == "__main__"):
             elif((event.type == pygame.KEYDOWN) and not(renaming)):
                 if(str(event.unicode) in keys):
                     keys[str(event.unicode)][0]()
-            elif((event.type == pygame.KEYDOWN) and (renaming)):
+                else:
+                    if((file_menu) and (event.key == pygame.K_ESCAPE)):
+                        file_menu = False
+            elif((event.type == pygame.KEYDOWN) and (renaming) and not(file_menu)):
                 if(event.key == pygame.K_BACKSPACE):
                     selected[2] = selected[2][:-1]
                 elif((event.key == pygame.K_RETURN) or (event.key == pygame.K_ESCAPE)):
@@ -203,7 +224,7 @@ if(__name__ == "__main__"):
                 selected[0] = font.render(selected[2], True, COLOUR_SELECTED, COLOUR_BG)
                 selected[1] = selected[0].get_rect()
                 selected[1].center = centre
-            elif(event.type == pygame.MOUSEBUTTONDOWN):
+            elif((event.type == pygame.MOUSEBUTTONDOWN) and not(file_menu)):
                 if(event.button == 1): #left click - moves nodes
                     for node in nodes:
                         if(node[1].collidepoint(event.pos)):
@@ -251,6 +272,15 @@ if(__name__ == "__main__"):
                         selected[0] = font.render(selected[2], True, COLOUR_FG, COLOUR_BG)
                         selected = None
                         renaming = False
+            elif((event.type == pygame.MOUSEBUTTONDOWN) and (event.button == 1) and (file_menu)):
+                v = 1
+                for item in menu:
+                    if(item[1].collidepoint(event.pos)):
+                        v *= 0
+                        nodes, edges = import_json(item[2])
+                        file_menu = False
+                if(v):
+                    file_menu = False
             elif(event.type == pygame.MOUSEBUTTONUP):
                 if(event.button == 1):
                     drag = False
@@ -284,6 +314,10 @@ if(__name__ == "__main__"):
             colour = COLOUR_SELECTED if(node == selected) else COLOUR_FG
             pygame.draw.rect(surface, colour, pygame.Rect(node[1].x - 1, node[1].y - 1, node[1].w + 2, node[1].h + 2))
             surface.blit(node[0], node[1])
+        if(file_menu):
+            for item in menu:
+                pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(item[1].x - 1, item[1].y - 1, item[1].w + 2, item[1].h + 2))
+                surface.blit(item[0], item[1])
         pygame.display.flip()
         clock.tick(60)
     pygame.quit()
