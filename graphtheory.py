@@ -26,19 +26,24 @@ def export_json(filename = ""):
     file.close()
 
 def import_json(filename):
+    global nodes
+    global edges
     path = os.path.dirname(os.path.realpath(__file__))
     file = open(path + "/" + filename, "r")
     file_contents = json.loads(file.read())
     file.close()
     nodes_json = file_contents["nodes"]
-    nodes0 = []
-    for node in nodes_json:
+    edges_json = file_contents["edges"]
+    n = len(nodes)
+    for row in edges:
+        row.extend([0 for node in nodes_json])
+    for (i, node) in enumerate(nodes_json):
         text           = font.render(node["name"], True, COLOUR_FG, COLOUR_BG)
         textbox        = text.get_rect()
         textbox.center = node["position"]
-        nodes0.append([text, textbox, node["name"]])
-    edges0 = file_contents["edges"]
-    return([nodes0, edges0])
+        nodes.append([text, textbox, node["name"]])
+        edges.append([0 for j in range(n)])
+        edges[-1].extend(edges_json[i])
 
 def toggle_import():
     global file_menu
@@ -67,6 +72,8 @@ def createNode(position = (0,0), label = ""):
     edges[-1][-1] = 1
 
 def deleteNode(node):
+    global nodes
+    global edges
     nodes.remove(nodes[node])
     for row in edges:
         row[node] = None #Setting the value to None means it will delete the correct item
@@ -75,26 +82,28 @@ def deleteNode(node):
     edges.remove(None)
 
 def createEdge(node1, node2):
+    global edges
     edges[node1][node2] += 1
     edges[node2][node1] += 1
 
-def arrangeNodes(radius, offset):
+def arrangeNodes(radius, centre):
+    global nodes
     n = len(nodes)
     factor = 2 * maths.pi / n
     for i in range(n):
-        x_i = radius * maths.cos(factor * i) + offset[0]
-        y_i = radius * maths.sin(factor * i) + offset[1]
+        x_i = radius * maths.cos(factor * i) + centre[0]
+        y_i = radius * maths.sin(factor * i) + centre[1]
         nodes[i][1].center = (int(x_i), int(y_i))
 
-def focusNode(node, radius, offset):
-    node[1].center = offset
+def focusNode(node, radius, centre):
+    node[1].center = centre
     n      = len(nodes)
     factor = 2 * maths.pi / (n - 1)
     past   = 0 #If we have iterated past node
     for i in range(n):
         if(nodes[i] != node):
-            x_i = radius * maths.cos(factor * (i - past)) + offset[0]
-            y_i = radius * maths.sin(factor * (i - past)) + offset[1]
+            x_i = radius * maths.cos(factor * (i - past)) + centre[0]
+            y_i = radius * maths.sin(factor * (i - past)) + centre[1]
             nodes[i][1].center = (int(x_i), int(y_i))
         else:
             past = 1
@@ -122,9 +131,15 @@ def focus():
         selected[0] = font.render(selected[2], True, COLOUR_FG, COLOUR_BG)
         selected = None
 
-def clear():
+def clearEdges():
     global edges
     edges = [[int(node_a==node_b) for node_a in nodes] for node_b in nodes]
+
+def clearAll():
+    global nodes
+    global edges
+    nodes = []
+    edges = []
 
 def complete():
     global edges
@@ -164,7 +179,7 @@ keys = {"q": [quitProgram, "quit"],
         "a": [lambda: arrangeNodes(200, screenCentre), "arrange nodes"],
         "f": [focus, "focus node"],
         "n": [lambda: createNode(screenCentre, label = str(len(nodes))), "new node"],
-        "c": [clear, "clear all edges"],
+        "c": [clearEdges, "clear all edges"],
         "k": [complete, "connect all nodes"],
         "=": [lambda: changeFontSize(5), "increase font size"],
         "-": [lambda: changeFontSize(-5), "decrease font size"],
@@ -176,7 +191,8 @@ keys = {"q": [quitProgram, "quit"],
         "e": [export_json, "export json"],
         "i": [toggle_import, "import json"],
         "r": [rename, "rename node"],
-        "d": [debug, "debug"]
+        "d": [debug, "debug"],
+        "x": [clearAll, "remove all nodes and edges"]
 }
 
 if(__name__ == "__main__"):
@@ -287,7 +303,7 @@ if(__name__ == "__main__"):
                 for item in menu:
                     if(item[1].collidepoint(event.pos)):
                         v *= 0
-                        nodes, edges = import_json(item[2])
+                        import_json(item[2])
                         file_menu = False
                 if(v):
                     file_menu = False
