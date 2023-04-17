@@ -148,6 +148,7 @@ def complete():
 def changeFontSize(changeInFontSize):
     global font_size
     global font
+    global minTextBox
     font_size = font_size + changeInFontSize
     font = pygame.font.SysFont("monospace", font_size)
     for node in nodes:
@@ -155,6 +156,7 @@ def changeFontSize(changeInFontSize):
         centre  = node[1].center
         node[1] = node[0].get_rect()
         node[1].center = centre
+    minTextBox = font.render(node[2], True, COLOUR_FG, COLOUR_BG).get_size()
 
 def changeLineWidth(changeInLineWidth):
     global line_width
@@ -213,6 +215,7 @@ if(__name__ == "__main__"):
     line_width = 2
     font_size = 40
     font = pygame.font.SysFont("monospace", font_size)
+    minTextBox = font.render("0", True, COLOUR_FG, COLOUR_BG).get_size()
 
     nodes = []
     edges = []
@@ -331,7 +334,10 @@ if(__name__ == "__main__"):
                 pygame.draw.line(surface, colour, node_a[1].center, node_b[1].center, line_width * edges[nodes.index(node_a)][nodes.index(node_b)])
         for node in nodes: #looks nicer with nodes on top of edges
             colour = COLOUR_SELECTED if(node == selected) else COLOUR_FG
-            pygame.draw.rect(surface, colour, pygame.Rect(node[1].x - 1, node[1].y - 1, node[1].w + 2, node[1].h + 2))
+            if(node[2] != ""):
+                pygame.draw.rect(surface, colour, pygame.Rect(node[1].x - 1, node[1].y - 1, node[1].w + 2, node[1].h + 2))
+            else:
+                pygame.draw.circle(surface, colour, node[1].center, min(minTextBox))
             surface.blit(node[0], node[1])
         if(file_menu):
             for item in menu:
