@@ -276,17 +276,20 @@ if(__name__ == "__main__"):
                             if((selected is not None) and (node != selected)):
                                 node_i = nodes.index(node)
                                 selected_i = nodes.index(selected)
-                                if(edges[selected_i][node_i] and not(pygame.key.get_mods() & pygame.KMOD_SHIFT)): #not holding shift connects disconnected pairs, disconnects connected pairs
+                                if(edges[selected_i][node_i] and not(pygame.key.get_mods() & pygame.KMOD_SHIFT)):
+                                    #not holding shift connects disconnected pairs, disconnects connected pairs
                                     edges[selected_i][node_i] = max(0, edges[selected_i][node_i]-1)
                                     edges[node_i][selected_i] = edges[selected_i][node_i]
-                                else: #holding shift allows multiple connections between nodes
+                                else:
+                                    #holding shift allows multiple connections between nodes
                                     edges[selected_i][node_i] += 1
                                     edges[node_i][selected_i] += 1
                                 if(not(renaming)): #if not renaming, deselect nodes
                                     selected[0] = font.render(selected[2], True, COLOUR_FG, COLOUR_BG)
                                     selected = None
                                     node[0] = font.render(node[2], True, COLOUR_FG, COLOUR_BG)
-                            elif((selected is not None) and (node == selected)): #Right clicking on the selected node deselects it
+                            elif((selected is not None) and (node == selected)):
+                                #Right clicking on the selected node deselects it
                                 selected = None
                                 renaming = False
                                 node[0] = font.render(node[2], True, COLOUR_FG, COLOUR_BG)
