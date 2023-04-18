@@ -56,7 +56,7 @@ def toggle_import():
         for (i, json) in enumerate(jsons):
             text       = font.render(json, True, COLOUR_FG, COLOUR_BG)
             box        = text.get_rect()
-            box.center = [size[0] / 2, size[1] / 2 - 1.5 * (len(jsons)/2-i) * font_size]
+            box.center = [size[0] / 2, size[1] / 2 - 1.5 * (len(jsons) / 2 - i) * font_size]
             menu.append([text, box, json])
 
 def createNode(position = (0,0), label = ""):
@@ -93,7 +93,7 @@ def arrangeNodes(radius, centre):
     for i in range(n):
         x_i = radius * maths.cos(factor * i) + centre[0]
         y_i = radius * maths.sin(factor * i) + centre[1]
-        nodes[i][1].center = (int(x_i), int(y_i))
+        nodes[i][1].center = (x_i, y_i)
 
 def focusNode(node, radius, centre):
     node[1].center = centre
@@ -104,7 +104,7 @@ def focusNode(node, radius, centre):
         if(nodes[i] != node):
             x_i = radius * maths.cos(factor * (i - past)) + centre[0]
             y_i = radius * maths.sin(factor * (i - past)) + centre[1]
-            nodes[i][1].center = (int(x_i), int(y_i))
+            nodes[i][1].center = (x_i, y_i)
         else:
             past = 1
 
@@ -200,21 +200,20 @@ keys = {"q": [quitProgram, "quit"],
 if(__name__ == "__main__"):
     pygame.init()
     size = (1600, 900)
+    screenCentre = (size[0] / 2, size[1] / 2)
     surface = pygame.display.set_mode(size, pygame.RESIZABLE)
     pygame.display.set_caption("Graph Theory")
     clock = pygame.time.Clock()
 
-    screenCentre = (size[0] / 2, size[1] / 2)
-
-    run = True
-    drag = False #drag node
-    scroll = False #drag screen (i.e. scrolling)
-    renaming = False
-    selected = None
-    file_menu = False
+    run        = True
+    drag       = False #drag node
+    scroll     = False #drag screen (i.e. scrolling)
+    renaming   = False
+    selected   = None
+    file_menu  = False
     line_width = 2
-    font_size = 40
-    font = pygame.font.SysFont("monospace", font_size)
+    font_size  = 40
+    font       = pygame.font.SysFont("monospace", font_size)
     minTextBox = font.render("0", True, COLOUR_FG, COLOUR_BG).get_size()
 
     nodes = []
@@ -230,9 +229,6 @@ if(__name__ == "__main__"):
                 size = (event.w, event.h)
                 screenCentre = (event.w / 2, event.h / 2)
                 surface = pygame.display.set_mode(size, pygame.RESIZABLE)
-                for node in nodes:
-                    node[1].x = int(node[1].x * factor[0])
-                    node[1].y = int(node[1].y * factor[1])
             elif((event.type == pygame.KEYDOWN) and not(renaming)):
                 if(str(event.unicode) in keys):
                     keys[str(event.unicode)][0]()
@@ -355,5 +351,4 @@ if(__name__ == "__main__"):
 # Vim-like
 # Rules for connecting edges
 # Edge names
-# Edge weights?
 # Digraph?
